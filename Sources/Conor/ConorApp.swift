@@ -1,5 +1,7 @@
 import SwiftUI
 import Foundation
+import AppKit
+import UniformTypeIdentifiers
 
 @main
 struct ConorApp: App {
