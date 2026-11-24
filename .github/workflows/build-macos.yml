@@ -57,11 +57,19 @@ jobs:
 
       - name: Package macOS app
         shell: bash
+        env:
+          SPARKLE_PUBLIC_ED_KEY: ${{ vars.SPARKLE_PUBLIC_ED_KEY }}
         run: |
           set -euo pipefail
           APP="dist/Conor.app"
-          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
           cp .build/release/Conor "$APP/Contents/MacOS/Conor"
+          SPARKLE_FRAMEWORK="$(find .build -type d -name Sparkle.framework -print -quit)"
+          test -n "$SPARKLE_FRAMEWORK"
+          ditto "$SPARKLE_FRAMEWORK" "$APP/Contents/Frameworks/Sparkle.framework"
+          install_name_tool -add_rpath @executable_path/../Frameworks "$APP/Contents/MacOS/Conor"
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$VERSION" == "$GITHUB_REF_NAME" ]]; then VERSION="0.1.0"; fi
           cat > "$APP/Contents/Info.plist" <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -72,10 +80,15 @@ jobs:
             <key>CFBundleIdentifier</key><string>com.rakhan17.conor</string>
             <key>CFBundleExecutable</key><string>Conor</string>
             <key>CFBundlePackageType</key><string>APPL</string>
-            <key>CFBundleShortVersionString</key><string>0.1.0</string>
+            <key>CFBundleShortVersionString</key><string>${VERSION}</string>
             <key>CFBundleVersion</key><string>${GITHUB_RUN_NUMBER}</string>
             <key>LSMinimumSystemVersion</key><string>13.0</string>
             <key>NSHighResolutionCapable</key><true/>
+            <key>SUFeedURL</key><string>https://github.com/rakhan17/Conor/releases/latest/download/appcast.xml</string>
+            <key>SUPublicEDKey</key><string>${SPARKLE_PUBLIC_ED_KEY}</string>
+            <key>SUEnableAutomaticChecks</key><true/>
+            <key>SUScheduledCheckInterval</key><integer>86400</integer>
+            <key>SUAutomaticallyUpdate</key><true/>
           </dict>
           </plist>
           PLIST
