@@ -619,8 +619,11 @@ struct TrainingView: View {
     private func installMLX() {
         isInstalling = true; logs = "Installing mlx-lm[train] with the system Python…\n"
         let task = Process(); let pipe = Pipe()
+        let venv = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Conor/mlx-venv", isDirectory: true)
+        let command = "python3 -m venv '\(venv.path)' && '\(venv.appendingPathComponent("bin/pip").path)' install 'mlx-lm[train]'"
         task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        task.arguments = ["python3", "-m", "pip", "install", "--user", "mlx-lm[train]"]
+        task.arguments = ["bash", "-lc", command]
         task.standardOutput = pipe; task.standardError = pipe
         pipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
@@ -633,7 +636,7 @@ struct TrainingView: View {
             Task { @MainActor in
                 isInstalling = false
                 logs += "\nMLX-LM installation finished (exit \(p.terminationStatus))."
-                if p.terminationStatus != 0 { logs += "\nIf pip reports an externally-managed-environment error, create a Python virtual environment and install mlx-lm[train] there." }
+                if p.terminationStatus != 0 { logs += "\nIf installation fails, check that Python 3.10+ is installed and that this Mac is Apple Silicon." }
             }
         }
         do { try task.run(); installProcess = task } catch {
@@ -652,8 +655,13 @@ struct TrainingView: View {
         do { try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true) }
         catch { logs = "Cannot create adapter output folder: \(error.localizedDescription)"; return }
         let task = Process(); let pipe = Pipe()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        task.arguments = ["mlx_lm.lora", "--model", model.baseModel, "--train", "--data", datasetURL.path,
+        let trainer = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Conor/mlx-venv/bin/mlx_lm.lora")
+        guard FileManager.default.isExecutableFile(atPath: trainer.path) else {
+            logs = "MLX-LM is not installed in Conor's isolated environment. Click Install training engine first."; return
+        }
+        task.executableURL = URL(fileURLWithPath: trainer.path)
+        task.arguments = ["--model", model.baseModel, "--train", "--data", datasetURL.path,
                           "--iters", String(epochs), "--batch-size", String(batchSize), "--learning-rate", String(rate),
                           "--adapter-path", output.path, "--steps-per-report", "1", "--save-every", "10", "--grad-checkpoint"]
         task.standardOutput = pipe; task.standardError = pipe
