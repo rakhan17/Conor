@@ -187,7 +187,8 @@ struct AppShell: View {
             .background(Color(nsColor: .windowBackgroundColor))
             Divider().opacity(0.6)
             HStack(spacing: 8) {
-                ForEach(tabs, id: \.0) { tab in
+                ForEach(Array(tabs.enumerated()), id: \.offset) { item in
+                    let tab = item.element
                     Button { selection = tab.0 } label: {
                         VStack(spacing: 5) {
                             Image(systemName: tab.1).font(.system(size: 15, weight: selection == tab.0 ? .semibold : .regular))
@@ -348,7 +349,7 @@ struct CreateModelView: View {
     @EnvironmentObject private var store: ModelStore
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
-    @State private var baseModel = "llama3.2"
+    @State private var baseModel = "mlx-community/Qwen2.5-0.5B-Instruct-4bit"
     @State private var selectedSkills: Set<ModelSkill> = [.conversation]
     @State private var systemPrompt = "You are a helpful, thoughtful AI assistant."
     @State private var epochs = 3
@@ -515,7 +516,6 @@ struct TrainingView: View {
     @State private var installProcess: Process?
     @State private var exitCode: Int32?
     private var selectedModel: AIModel? { store.models.first { $0.id == selectedID } }
-    private var isAppleSilicon: Bool { ProcessInfo.processInfo.machineIdentifier.hasPrefix("arm") || ProcessInfo.processInfo.processorCount > 4 }
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             PageHeader(title: "Training", subtitle: "Fine-tune real model weights locally with MLX-LM and LoRA.")
@@ -528,7 +528,7 @@ struct TrainingView: View {
                             Text("TRAINING SETUP").font(.system(size: 9, weight: .bold)).tracking(1.1).foregroundStyle(.secondary)
                             Picker("Model workspace", selection: $selectedID) {
                                 Text("Select model").tag(Optional<UUID>.none)
-                                ForEach(store.models) { Text($0.name).tag(Optional(modelID: $0.id)) }
+                                ForEach(store.models) { Text($0.name).tag(Optional($0.id)) }
                             }
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("Base model").font(.system(size: 11, weight: .semibold))
