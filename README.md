@@ -18,40 +18,66 @@ A native macOS AI studio for creating model workspaces, fine-tuning language mod
 
 ## What is Conor?
 
-Conor is an AI Model Studio concept built as a native SwiftUI application. It gives each model its own identity, base-model configuration, system instructions, and a multi-select set of capabilities.
+Conor is a native SwiftUI AI Model Studio. Each model workspace has its own identity, base-model configuration, system instructions, and selectable capabilities.
 
-### Current build
+## Current features
 
-- Native macOS interface with a monochrome design.
+- Native macOS interface with a minimal monochrome design and bottom navigation.
 - Create and manage multiple model workspaces.
-- Choose multiple capabilities: conversation, code, image, vision, writing, and research.
-- Configure a base model, system instructions, and epoch settings.
+- Select capabilities: conversation, code, image, vision, writing, and research.
+- Configure a base model and system instructions.
 - Persist model projects locally.
 - Connect to a locally running [Ollama](https://ollama.com/) instance and chat with installed models.
-- Select a JSON or text dataset and save training configuration.
-- Sparkle 2 is integrated for signed in-app updates. Once the one-time signing keys are configured, Conor checks for updates daily and can download and install releases without a manual GitHub download.\n- GitHub Actions builds a macOS DMG on pushes and publishes the DMG when a v* tag is pushed.
+- Run local LoRA fine-tuning through MLX-LM on Apple Silicon.
+- Check for signed application updates through Sparkle 2 once update signing is configured.
 
-### Training status
+## Local model training
 
-The Training tab now launches the real MLX-LM LoRA fine-tuning CLI. It expects a local dataset directory containing `train.jsonl` and optionally `valid.jsonl`. Each JSONL line must be one valid JSON object. MLX-LM supports chat (`messages`), prompt/completion, and text examples. Trained adapter weights are written under `~/Library/Application Support/Conor/Training/`. This is adapter fine-tuning, not full pretraining from scratch.\n\nTraining requires Apple Silicon and a compatible MLX model. Start with a small quantized model, batch size 1, and a modest dataset on Macs with 8 GB unified memory. MLX-LM's official guide documents the supported commands and dataset formats: [MLX-LM LoRA guide](https://github.com/ml-explore/mlx-lm/blob/main/mlx_lm/LORA.md). Image generation and code-specific execution workspaces are not active engines yet.
+The Training tab launches the MLX-LM LoRA fine-tuning CLI. This performs actual adapter fine-tuning, not full pretraining from scratch.
 
-## In-app updates\n\nConor uses Sparkle 2 with Ed25519-signed update archives. A one-time key setup is required before secure updates can be delivered. Follow [the in-app update setup guide](docs/IN_APP_UPDATES.md) to generate the keypair and configure the public repository variable and private Actions secret. The private key must never be committed.\n\n## Requirements
+Choose a dataset folder containing:
+
+- `train.jsonl` (required)
+- `valid.jsonl` (optional)
+
+Each line must be a valid JSON object. MLX-LM supports chat (`messages`), prompt/completion, and text examples. Adapter weights and checkpoints are saved under:
+
+`~/Library/Application Support/Conor/Training/`
+
+Training requires Apple Silicon, Python 3.10+, internet access for the initial runtime/model download, and a compatible MLX model. On an 8 GB Mac, begin with a small quantized model, batch size 1, and a modest dataset. See the [official MLX-LM LoRA guide](https://github.com/ml-explore/mlx-lm/blob/main/mlx_lm/LORA.md).
+
+Image generation and dedicated code execution workspaces are not active engines yet.
+
+## In-app updates
+
+Conor integrates Sparkle 2 for signed, in-app updates. A one-time Ed25519 key setup is required before update delivery is enabled. Follow [the setup guide](docs/IN_APP_UPDATES.md) to create the keypair and configure:
+
+- GitHub Actions repository variable: `SPARKLE_PUBLIC_ED_KEY`
+- GitHub Actions repository secret: `SPARKLE_EDDSA_PRIVATE_KEY`
+
+Never commit or share the private key. Once configured, tagged releases publish a signed update archive and appcast. Conor checks for updates daily and can install them without a manual GitHub download.
+
+## Requirements
 
 - macOS 13 or later.
-- Apple Silicon or Intel Mac capable of running the selected local runtime.
-- Apple Silicon Mac for MLX-LM training.\n- Python 3.10+ and internet access for the first MLX-LM installation/model download.\n- [Ollama](https://ollama.com/) for local chat in the Playground.
+- Apple Silicon for MLX-LM training.
+- Python 3.10+ for the training runtime.
+- [Ollama](https://ollama.com/) for local chat in the Playground.
 
 ## Install
 
-1. Download Conor-macOS.dmg from the [latest release](https://github.com/rakhan17/Conor/releases/latest/download/Conor-macOS.dmg).
-2. Open the DMG and drag Conor.app to Applications.
-3. Open Conor. For local chat, install and launch Ollama, then download a model such as llama3.2.
+1. Download `Conor-macOS.dmg` from the [latest GitHub Release](https://github.com/rakhan17/Conor/releases/latest/download/Conor-macOS.dmg).
+2. Open the DMG and drag `Conor.app` to Applications.
+3. Launch Conor. For local chat, install and launch Ollama, then download a model such as `llama3.2`.
 
-> This initial DMG is ad-hoc signed, not Developer ID notarized. macOS Gatekeeper may require you to use Control-click → Open the first time. Do not bypass security prompts unless you trust the build source.
+> The current DMG is ad-hoc signed, not Developer ID notarized. macOS Gatekeeper may require Control-click → Open the first time. Only run builds you trust.
 
 ## Build from source
 
-    swift build -c release
+```bash
+swift package resolve
+swift build -c release
+```
 
 ## Roadmap
 
@@ -59,9 +85,11 @@ The Training tab now launches the real MLX-LM LoRA fine-tuning CLI. It expects a
 - [x] Multiple model workspaces and capability selection
 - [x] Local persistence
 - [x] Ollama chat integration
-- [x] Training configuration and dataset selection
-- [ ] MLX-LM fine-tuning with LoRA and real epoch/loss reporting
-- [ ] Checkpoint, pause, resume, and cancel controls
+- [x] MLX-LM LoRA fine-tuning integration
+- [x] Dataset selection and live training process output
+- [x] Sparkle update framework integration
+- [ ] Signed update key setup and first automatic update release
+- [ ] Checkpoint resume, pause, and richer training metrics
 - [ ] Dedicated code editor and execution sandbox
 - [ ] Image-generation engine integration and preview
 - [ ] Model evaluation and comparison
