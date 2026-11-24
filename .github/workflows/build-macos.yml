@@ -113,3 +113,26 @@ jobs:
         with:
           generate_release_notes: true
           files: dist/Conor-macOS.dmg
+
+      - name: Create and publish signed Sparkle update feed
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SPARKLE_EDDSA_PRIVATE_KEY: ${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }}
+          SPARKLE_PUBLIC_ED_KEY: ${{ vars.SPARKLE_PUBLIC_ED_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$SPARKLE_EDDSA_PRIVATE_KEY" || -z "$SPARKLE_PUBLIC_ED_KEY" ]]; then
+            echo "Sparkle signing keys are not configured; publishing the DMG only."
+            exit 0
+          fi
+          python3 -m pip install cryptography
+          ditto -c -k --sequesterRsrc --keepParent dist/Conor.app dist/Conor-macOS.zip
+          python3 scripts/create_appcast.py \
+            --archive dist/Conor-macOS.zip \
+            --version "${GITHUB_REF_NAME#v}" \
+            --build "$GITHUB_RUN_NUMBER" \
+            --tag "$GITHUB_REF_NAME" \
+            --output dist/appcast.xml
+          gh release upload "$GITHUB_REF_NAME" dist/Conor-macOS.zip dist/appcast.xml --clobber
