@@ -10,7 +10,7 @@ struct ConorApp: App {
     private let updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
     var body: some Scene {
         WindowGroup {
-            AppShell().environmentObject(store).preferredColorScheme(.dark)
+            AppShell(onCheckForUpdates: { updaterController.checkForUpdates(nil) }).environmentObject(store).preferredColorScheme(.dark)
                 .frame(minWidth: 980, minHeight: 650)
         }
         .windowStyle(.titleBar)
@@ -148,6 +148,7 @@ final class ChatSession: ObservableObject {
 }
 
 struct AppShell: View {
+    let onCheckForUpdates: () -> Void
     @EnvironmentObject private var store: ModelStore
     @State private var selection = "Overview"
     @State private var showingCreator = false
@@ -186,7 +187,7 @@ struct AppShell: View {
                 case "Models": ModelsView(showingCreator: $showingCreator)
                 case "Training": TrainingView()
                 case "Playground": PlaygroundView()
-                case "Settings": SettingsView(onCheckForUpdates: { updaterController.checkForUpdates(nil) })
+                case "Settings": SettingsView(onCheckForUpdates: onCheckForUpdates)
                 default: OverviewView(selection: $selection, showingCreator: $showingCreator)
                 }
             }
