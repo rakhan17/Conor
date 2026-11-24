@@ -144,59 +144,87 @@ struct AppShell: View {
     @EnvironmentObject private var store: ModelStore
     @State private var selection = "Overview"
     @State private var showingCreator = false
+    private let tabs: [(String, String)] = [
+        ("Overview", "square.grid.2x2"),
+        ("Models", "cube.transparent"),
+        ("Training", "waveform.path.ecg"),
+        ("Playground", "bubble.left.and.bubble.right"),
+        ("Settings", "gearshape")
+    ]
     var body: some View {
-        NavigationSplitView {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 9) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10).fill(Color.white)
-                        Image(systemName: "circle.hexagongrid.fill").font(.system(size: 17, weight: .semibold)).foregroundStyle(.black)
-                    }.frame(width: 34, height: 34)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("conor").font(.system(size: 18, weight: .bold, design: .rounded))
-                        Text("AI MODEL STUDIO").font(.system(size: 8, weight: .semibold)).tracking(1.5).foregroundStyle(.secondary)
-                    }
-                }.padding(.horizontal, 12).padding(.top, 18).padding(.bottom, 22)
-                sidebarItem("Overview", icon: "square.grid.2x2")
-                sidebarItem("My Models", icon: "cube.transparent")
-                sidebarItem("Playground", icon: "bubble.left.and.bubble.right")
-                sidebarItem("Training", icon: "waveform.path.ecg")
+        VStack(spacing: 0) {
+            HStack(spacing: 9) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9).fill(Color.white)
+                    Image(systemName: "circle.hexagongrid.fill").font(.system(size: 16, weight: .semibold)).foregroundStyle(.black)
+                }.frame(width: 30, height: 30)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("conor").font(.system(size: 17, weight: .bold, design: .rounded))
+                    Text("AI MODEL STUDIO").font(.system(size: 8, weight: .semibold)).tracking(1.4).foregroundStyle(.secondary)
+                }
                 Spacer()
-                HStack(spacing: 8) {
+                HStack(spacing: 7) {
                     Circle().fill(store.ollamaAvailable ? .green : .gray).frame(width: 7, height: 7)
-                    Text(store.ollamaAvailable ? "Ollama connected" : "Local engine offline").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
-                    Spacer()
-                    Button { Task { await store.refreshOllama() } } label: { Image(systemName: "arrow.clockwise").font(.system(size: 11)) }.buttonStyle(.plain)
-                }.padding(12)
+                    Text(store.ollamaAvailable ? "Ollama connected" : "Ollama offline")
+                        .font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+                }
+                Button { Task { await store.refreshOllama() } } label: {
+                    Image(systemName: "arrow.clockwise").font(.system(size: 11))
+                }.buttonStyle(.plain).help("Refresh local runtime")
             }
-            .frame(minWidth: 205).background(Color(nsColor: .controlBackgroundColor))
-            .navigationSplitViewColumnWidth(min: 205, ideal: 225, max: 250)
-        } detail: {
+            .padding(.horizontal, 24).padding(.vertical, 13)
+            Divider().opacity(0.5)
             Group {
                 switch selection {
-                case "My Models": ModelsView(showingCreator: $showingCreator)
-                case "Playground": PlaygroundView()
+                case "Models": ModelsView(showingCreator: $showingCreator)
                 case "Training": TrainingView()
+                case "Playground": PlaygroundView()
+                case "Settings": SettingsView()
                 default: OverviewView(selection: $selection, showingCreator: $showingCreator)
                 }
-            }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Color(nsColor: .windowBackgroundColor))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(nsColor: .windowBackgroundColor))
+            Divider().opacity(0.6)
+            HStack(spacing: 8) {
+                ForEach(tabs, id: \.0) { tab in
+                    Button { selection = tab.0 } label: {
+                        VStack(spacing: 5) {
+                            Image(systemName: tab.1).font(.system(size: 15, weight: selection == tab.0 ? .semibold : .regular))
+                            Text(tab.0).font(.system(size: 10, weight: selection == tab.0 ? .semibold : .medium))
+                        }
+                        .foregroundStyle(selection == tab.0 ? Color.primary : Color.secondary)
+                        .frame(maxWidth: .infinity).frame(height: 48)
+                        .background(selection == tab.0 ? Color.primary.opacity(0.075) : .clear, in: RoundedRectangle(cornerRadius: 9))
+                    }.buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 18).padding(.vertical, 7)
+            .background(Color(nsColor: .controlBackgroundColor))
         }
         .sheet(isPresented: $showingCreator) { CreateModelView() }
     }
-    private func sidebarItem(_ title: String, icon: String) -> some View {
-        Button { selection = title } label: {
-            HStack(spacing: 11) {
-                Image(systemName: icon).frame(width: 18)
-                Text(title)
-                Spacer()
-                if title == "My Models" && !store.models.isEmpty {
-                    Text("\(store.models.count)").font(.caption2).foregroundStyle(.secondary)
-                }
-            }
-            .font(.system(size: 13, weight: selection == title ? .semibold : .medium))
-            .padding(.horizontal, 12).padding(.vertical, 9).contentShape(RoundedRectangle(cornerRadius: 8))
-            .background(selection == title ? Color.primary.opacity(0.09) : .clear, in: RoundedRectangle(cornerRadius: 8))
-        }.buttonStyle(.plain).padding(.horizontal, 8)
+}
+
+struct SettingsView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            PageHeader(title: "Settings", subtitle: "Manage local runtimes, training tools, and application updates.")
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Training runtime", systemImage: "cpu").font(.system(size: 14, weight: .semibold))
+                Text("Conor uses MLX-LM for local LoRA fine-tuning on Apple Silicon. The training tab can install the runtime and launch real training jobs.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+            }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Application updates", systemImage: "arrow.down.circle").font(.system(size: 14, weight: .semibold))
+                Text("In-app update delivery will be enabled with signed Sparkle releases. The release signing key must be configured before secure automatic installation can be activated.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                Button("Open Conor releases") {
+                    NSWorkspace.shared.open(URL(string: "https://github.com/rakhan17/Conor/releases")!)
+                }.buttonStyle(.bordered)
+            }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+            Spacer()
+        }.padding(28)
     }
 }
 
@@ -476,63 +504,182 @@ struct TrainingView: View {
     @EnvironmentObject private var store: ModelStore
     @State private var selectedID: UUID?
     @State private var datasetURL: URL?
-    @State private var epochs = 3
+    @State private var epochs = 100
+    @State private var batchSize = 1
+    @State private var learningRate = "0.0001"
+    @State private var adapterPath = ""
+    @State private var isInstalling = false
+    @State private var isTraining = false
+    @State private var logs = "Choose a dataset folder containing train.jsonl to begin."
+    @State private var process: Process?
+    @State private var installProcess: Process?
+    @State private var exitCode: Int32?
     private var selectedModel: AIModel? { store.models.first { $0.id == selectedID } }
+    private var isAppleSilicon: Bool { ProcessInfo.processInfo.machineIdentifier.hasPrefix("arm") || ProcessInfo.processInfo.processorCount > 4 }
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            PageHeader(title: "Training", subtitle: "Prepare datasets and configure a future fine-tuning run.")
+        VStack(alignment: .leading, spacing: 16) {
+            PageHeader(title: "Training", subtitle: "Fine-tune real model weights locally with MLX-LM and LoRA.")
             if store.models.isEmpty {
-                EmptyState(icon: "waveform.path.ecg", title: "Create a model first", message: "Training configuration is attached to a model workspace.", action: "Go to My Models") {}
+                EmptyState(icon: "waveform.path.ecg", title: "Create a model first", message: "Create a workspace and set its base model to a compatible MLX or Hugging Face model.", action: "Create a model") {}
             } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("TRAINING CONFIGURATION").font(.system(size: 9, weight: .bold)).tracking(1.1).foregroundStyle(.secondary)
-                    Picker("Model", selection: $selectedID) {
-                        ForEach(store.models) { Text($0.name).tag(Optional($0.id)) }
-                    }.onAppear { if selectedID == nil { selectedID = store.models.first?.id } }
-                    .onChange(of: selectedID) { value in if let model = store.models.first(where: { $0.id == value }) { epochs = model.epochs } }
-                    HStack {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Epochs").font(.system(size: 12, weight: .semibold))
-                            Text("One epoch is one full pass through the training dataset.").font(.system(size: 10)).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Stepper("\(epochs)", value: $epochs, in: 1...100)
-                    }.padding(13).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 10))
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("TRAINING DATASET").font(.system(size: 9, weight: .bold)).tracking(1.1).foregroundStyle(.secondary)
-                        HStack {
-                            Image(systemName: "doc.text").foregroundStyle(.secondary)
-                            Text(datasetURL?.lastPathComponent ?? "No dataset selected").font(.system(size: 11)).lineLimit(1)
-                            Spacer()
-                            Button("Choose file") { chooseDataset() }.buttonStyle(.bordered)
-                        }.padding(12).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 10))
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("TRAINING SETUP").font(.system(size: 9, weight: .bold)).tracking(1.1).foregroundStyle(.secondary)
+                            Picker("Model workspace", selection: $selectedID) {
+                                Text("Select model").tag(Optional<UUID>.none)
+                                ForEach(store.models) { Text($0.name).tag(Optional(modelID: $0.id)) }
+                            }
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("Base model").font(.system(size: 11, weight: .semibold))
+                                TextField("mlx-community/Qwen2.5-0.5B-Instruct-4bit", text: baseModelBinding)
+                                    .textFieldStyle(.roundedBorder)
+                                Text("Use a compatible MLX model repository or a local MLX model directory. A small 0.5B quantized model is a sensible starting point on an 8 GB Mac.")
+                                    .font(.system(size: 10)).foregroundStyle(.secondary)
+                            }
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Dataset folder").font(.system(size: 11, weight: .semibold))
+                                    Text(datasetURL?.path ?? "Expected: train.jsonl, optional valid.jsonl")
+                                        .font(.system(size: 9, design: .monospaced)).foregroundStyle(.secondary).lineLimit(2)
+                                }
+                                Spacer()
+                                Button("Choose folder") { chooseDataset() }.buttonStyle(.bordered)
+                            }.padding(11).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 9))
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("Iterations").font(.system(size: 10, weight: .semibold))
+                                    Stepper("\(epochs)", value: $epochs, in: 1...10000, step: 10).frame(width: 145)
+                                }
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("Batch size").font(.system(size: 10, weight: .semibold))
+                                    Stepper("\(batchSize)", value: $batchSize, in: 1...8).frame(width: 120)
+                                }
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("Learning rate").font(.system(size: 10, weight: .semibold))
+                                    TextField("0.0001", text: $learningRate).textFieldStyle(.roundedBorder).frame(width: 110)
+                                }
+                            }
+                            HStack(spacing: 8) {
+                                Button { installMLX() } label: {
+                                    if isInstalling { ProgressView().controlSize(.small); Text("Installing MLX-LM…") }
+                                    else { Label("Install training engine", systemImage: "shippingbox") }
+                                }.buttonStyle(.bordered).disabled(isInstalling || isTraining)
+                                Spacer()
+                                Button { startTraining() } label: {
+                                    Label(isTraining ? "Training…" : "Start real training", systemImage: isTraining ? "waveform" : "play.fill")
+                                }.buttonStyle(.borderedProminent).tint(.primary).foregroundStyle(.black)
+                                    .disabled(isTraining || isInstalling || datasetURL == nil || selectedModel == nil)
+                                if isTraining {
+                                    Button("Stop", role: .destructive) { stopTraining() }.buttonStyle(.bordered)
+                                }
+                            }
+                        }.padding(16).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 13))
+                        VStack(alignment: .leading, spacing: 9) {
+                            HStack {
+                                Label("Live training output", systemImage: "terminal").font(.system(size: 13, weight: .semibold))
+                                Spacer()
+                                if isTraining { Text("RUNNING").font(.system(size: 9, weight: .bold)).foregroundStyle(.green) }
+                                else if let exitCode { Text(exitCode == 0 ? "COMPLETED" : "EXIT \(exitCode)").font(.system(size: 9, weight: .bold)).foregroundStyle(exitCode == 0 ? .green : .red) }
+                            }
+                            ScrollView {
+                                Text(logs).font(.system(size: 10, design: .monospaced)).textSelection(.enabled)
+                                    .frame(maxWidth: .infinity, alignment: .leading).padding(10)
+                            }.frame(minHeight: 190, maxHeight: 300).background(Color.black.opacity(0.35), in: RoundedRectangle(cornerRadius: 8))
+                        }.padding(15).background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 12))
+                        Text("MLX-LM performs actual LoRA/QLoRA fine-tuning and writes adapter checkpoints to disk. Training runs locally and may use substantial unified memory. Keep the Mac plugged in and start with a small quantized model, batch size 1, and a small dataset.")
+                            .font(.system(size: 10)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     }
-                    if let selectedModel {
-                        Button("Save training settings") {
-                            var updated = selectedModel
-                            updated.epochs = epochs
-                            updated.datasetPath = datasetURL?.path ?? updated.datasetPath
-                            store.update(updated)
-                        }.buttonStyle(.borderedProminent).tint(.primary).foregroundStyle(.black)
-                    }
-                }.padding(16).background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 13))
-                VStack(alignment: .leading, spacing: 9) {
-                    Label("Training engine not connected", systemImage: "info.circle").font(.system(size: 13, weight: .semibold))
-                    Text("This build saves model settings and dataset selection, but it does not modify model weights or display simulated training progress. A real training backend (for example, MLX fine-tuning with LoRA on Apple Silicon) must be installed and integrated before a run can start.")
-                        .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                    Text("Planned next: MLX-LM runner · live epoch and loss metrics · pause/cancel · checkpoint management.")
-                        .font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
-                }.padding(16).background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 12))
-                Spacer()
+                }
             }
         }.padding(28)
+        .onAppear { if selectedID == nil { selectedID = store.models.first?.id } }
+        .onChange(of: selectedID) { newID in
+            if let model = store.models.first(where: { $0.id == newID }) { epochs = max(10, model.epochs * 10) }
+        }
+        .onDisappear { if isTraining { stopTraining() } }
+    }
+    private var baseModelBinding: Binding<String> {
+        Binding(get: { selectedModel?.baseModel ?? "" }, set: { value in
+            guard var model = selectedModel else { return }; model.baseModel = value; store.update(model)
+        })
     }
     private func chooseDataset() {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.json, .plainText]
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
-        if panel.runModal() == .OK { datasetURL = panel.url }
+        if panel.runModal() == .OK, let url = panel.url {
+            datasetURL = url
+            logs = FileManager.default.fileExists(atPath: url.appendingPathComponent("train.jsonl").path)
+                ? "Dataset selected: \(url.lastPathComponent)\nFound train.jsonl. Ready to train."
+                : "ERROR: This folder does not contain train.jsonl. MLX-LM expects a directory with train.jsonl and optional valid.jsonl."
+        }
+    }
+    private func installMLX() {
+        isInstalling = true; logs = "Installing mlx-lm[train] with the system Python…\n"
+        let task = Process(); let pipe = Pipe()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        task.arguments = ["python3", "-m", "pip", "install", "--user", "mlx-lm[train]"]
+        task.standardOutput = pipe; task.standardError = pipe
+        pipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if !data.isEmpty, let chunk = String(data: data, encoding: .utf8) {
+                Task { @MainActor in logs += chunk }
+            }
+        }
+        task.terminationHandler = { p in
+            pipe.fileHandleForReading.readabilityHandler = nil
+            Task { @MainActor in
+                isInstalling = false
+                logs += "\nMLX-LM installation finished (exit \(p.terminationStatus))."
+                if p.terminationStatus != 0 { logs += "\nIf pip reports an externally-managed-environment error, create a Python virtual environment and install mlx-lm[train] there." }
+            }
+        }
+        do { try task.run(); installProcess = task } catch {
+            isInstalling = false; logs += "\nCould not start Python: \(error.localizedDescription)"
+        }
+    }
+    private func startTraining() {
+        guard let model = selectedModel, let datasetURL else { return }
+        let trainFile = datasetURL.appendingPathComponent("train.jsonl")
+        guard FileManager.default.fileExists(atPath: trainFile.path) else {
+            logs = "Training stopped: train.jsonl was not found in the selected folder."; return
+        }
+        guard let rate = Double(learningRate), rate > 0 else { logs = "Learning rate must be a positive number."; return }
+        let output = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Conor/Training/\(model.id.uuidString)", isDirectory: true)
+        do { try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true) }
+        catch { logs = "Cannot create adapter output folder: \(error.localizedDescription)"; return }
+        let task = Process(); let pipe = Pipe()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        task.arguments = ["mlx_lm.lora", "--model", model.baseModel, "--train", "--data", datasetURL.path,
+                          "--iters", String(epochs), "--batch-size", String(batchSize), "--learning-rate", String(rate),
+                          "--adapter-path", output.path, "--steps-per-report", "1", "--save-every", "10", "--grad-checkpoint"]
+        task.standardOutput = pipe; task.standardError = pipe
+        pipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if !data.isEmpty, let chunk = String(data: data, encoding: .utf8) {
+                Task { @MainActor in logs += chunk }
+            }
+        }
+        task.terminationHandler = { p in
+            pipe.fileHandleForReading.readabilityHandler = nil
+            Task { @MainActor in
+                isTraining = false; exitCode = p.terminationStatus; process = nil
+                logs += "\n\nTraining process ended with exit code \(p.terminationStatus)."
+                if p.terminationStatus == 0, var updated = store.models.first(where: { $0.id == model.id }) {
+                    updated.status = "LoRA trained"; store.update(updated)
+                }
+            }
+        }
+        do {
+            logs = "Starting MLX-LM LoRA training…\nBase: \(model.baseModel)\nDataset: \(datasetURL.path)\nIterations: \(epochs)\nAdapter output: \(output.path)\n\n"
+            exitCode = nil; isTraining = true; try task.run(); process = task
+        } catch { isTraining = false; logs += "Could not launch mlx_lm.lora: \(error.localizedDescription)\nInstall MLX-LM first." }
+    }
+    private func stopTraining() {
+        process?.terminate(); logs += "\nStop requested by user."
     }
 }
 
