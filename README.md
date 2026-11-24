@@ -4,7 +4,7 @@
 
 **Create. Configure. Experiment.**
 
-A native macOS workspace for creating and managing AI model projects, configuring capabilities, and testing local models.
+A native macOS AI studio for creating model workspaces, fine-tuning language models locally with MLX-LM LoRA, and testing them in a local playground.
 
 [![Build macOS](https://github.com/rakhan17/Conor/actions/workflows/build-macos.yml/badge.svg)](https://github.com/rakhan17/Conor/actions/workflows/build-macos.yml)
 [![Platform](https://img.shields.io/badge/platform-macOS-black)](https://www.apple.com/macos/)
@@ -33,13 +33,13 @@ Conor is an AI Model Studio concept built as a native SwiftUI application. It gi
 
 ### Training status
 
-The current build does **not** fine-tune model weights yet. It stores training configuration and dataset selection without pretending to run a training job. A real training engine, such as MLX-LM/LoRA on Apple Silicon, is a planned integration. Image generation and code-specific workspaces are also planned integrations, not active engines in this first build.
+The Training tab now launches the real MLX-LM LoRA fine-tuning CLI. It expects a local dataset directory containing `train.jsonl` and optionally `valid.jsonl`. Each JSONL line must be one valid JSON object. MLX-LM supports chat (`messages`), prompt/completion, and text examples. Trained adapter weights are written under `~/Library/Application Support/Conor/Training/`. This is adapter fine-tuning, not full pretraining from scratch.\n\nTraining requires Apple Silicon and a compatible MLX model. Start with a small quantized model, batch size 1, and a modest dataset on Macs with 8 GB unified memory. MLX-LM's official guide documents the supported commands and dataset formats: [MLX-LM LoRA guide](https://github.com/ml-explore/mlx-lm/blob/main/mlx_lm/LORA.md). Image generation and code-specific execution workspaces are not active engines yet.
 
 ## Requirements
 
 - macOS 13 or later.
 - Apple Silicon or Intel Mac capable of running the selected local runtime.
-- [Ollama](https://ollama.com/) for local chat in the Playground.
+- Apple Silicon Mac for MLX-LM training.\n- Python 3.10+ and internet access for the first MLX-LM installation/model download.\n- [Ollama](https://ollama.com/) for local chat in the Playground.
 
 ## Install
 
