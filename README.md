@@ -29,13 +29,13 @@ Conor is an AI Model Studio concept built as a native SwiftUI application. It gi
 - Persist model projects locally.
 - Connect to a locally running [Ollama](https://ollama.com/) instance and chat with installed models.
 - Select a JSON or text dataset and save training configuration.
-- GitHub Actions builds a macOS DMG on pushes and publishes the DMG when a v* tag is pushed.
+- Sparkle 2 is integrated for signed in-app updates. Once the one-time signing keys are configured, Conor checks for updates daily and can download and install releases without a manual GitHub download.\n- GitHub Actions builds a macOS DMG on pushes and publishes the DMG when a v* tag is pushed.
 
 ### Training status
 
 The Training tab now launches the real MLX-LM LoRA fine-tuning CLI. It expects a local dataset directory containing `train.jsonl` and optionally `valid.jsonl`. Each JSONL line must be one valid JSON object. MLX-LM supports chat (`messages`), prompt/completion, and text examples. Trained adapter weights are written under `~/Library/Application Support/Conor/Training/`. This is adapter fine-tuning, not full pretraining from scratch.\n\nTraining requires Apple Silicon and a compatible MLX model. Start with a small quantized model, batch size 1, and a modest dataset on Macs with 8 GB unified memory. MLX-LM's official guide documents the supported commands and dataset formats: [MLX-LM LoRA guide](https://github.com/ml-explore/mlx-lm/blob/main/mlx_lm/LORA.md). Image generation and code-specific execution workspaces are not active engines yet.
 
-## Requirements
+## In-app updates\n\nConor uses Sparkle 2 with Ed25519-signed update archives. A one-time key setup is required before secure updates can be delivered. Follow [the in-app update setup guide](docs/IN_APP_UPDATES.md) to generate the keypair and configure the public repository variable and private Actions secret. The private key must never be committed.\n\n## Requirements
 
 - macOS 13 or later.
 - Apple Silicon or Intel Mac capable of running the selected local runtime.
