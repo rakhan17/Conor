@@ -2,10 +2,12 @@ import SwiftUI
 import Foundation
 import AppKit
 import UniformTypeIdentifiers
+import Sparkle
 
 @main
 struct ConorApp: App {
     @StateObject private var store = ModelStore()
+    private let updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
     var body: some Scene {
         WindowGroup {
             AppShell().environmentObject(store).preferredColorScheme(.dark)
@@ -13,6 +15,11 @@ struct ConorApp: App {
         }
         .windowStyle(.titleBar)
         .defaultSize(width: 1180, height: 760)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") { updaterController.checkForUpdates(nil) }
+            }
+        }
     }
 }
 
@@ -179,7 +186,7 @@ struct AppShell: View {
                 case "Models": ModelsView(showingCreator: $showingCreator)
                 case "Training": TrainingView()
                 case "Playground": PlaygroundView()
-                case "Settings": SettingsView()
+                case "Settings": SettingsView(onCheckForUpdates: { updaterController.checkForUpdates(nil) })
                 default: OverviewView(selection: $selection, showingCreator: $showingCreator)
                 }
             }
@@ -208,21 +215,31 @@ struct AppShell: View {
 }
 
 struct SettingsView: View {
+    let onCheckForUpdates: () -> Void
+    private var updatesConfigured: Bool {
+        let key = Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") as? String ?? ""
+        return key.count >= 40
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             PageHeader(title: "Settings", subtitle: "Manage local runtimes, training tools, and application updates.")
             VStack(alignment: .leading, spacing: 8) {
                 Label("Training runtime", systemImage: "cpu").font(.system(size: 14, weight: .semibold))
-                Text("Conor uses MLX-LM for local LoRA fine-tuning on Apple Silicon. The training tab can install the runtime and launch real training jobs.")
+                Text("Conor uses MLX-LM for local LoRA fine-tuning on Apple Silicon. Install the engine from the Training tab to run jobs on your Mac.")
                     .font(.system(size: 11)).foregroundStyle(.secondary)
             }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
             VStack(alignment: .leading, spacing: 8) {
-                Label("Application updates", systemImage: "arrow.down.circle").font(.system(size: 14, weight: .semibold))
-                Text("In-app update delivery will be enabled with signed Sparkle releases. The release signing key must be configured before secure automatic installation can be activated.")
+                Label("Automatic application updates", systemImage: "arrow.down.circle").font(.system(size: 14, weight: .semibold))
+                Text(updatesConfigured
+                     ? "Sparkle is configured. Conor checks the signed release feed automatically and can install updates without a manual GitHub download."
+                     : "Sparkle is integrated, but secure updates are waiting for the public signing key to be configured in the build. The private signing key must stay in GitHub Actions secrets.")
                     .font(.system(size: 11)).foregroundStyle(.secondary)
-                Button("Open Conor releases") {
-                    NSWorkspace.shared.open(URL(string: "https://github.com/rakhan17/Conor/releases")!)
-                }.buttonStyle(.bordered)
+                HStack {
+                    Button("Check for Updates…", action: onCheckForUpdates).buttonStyle(.borderedProminent).tint(.primary).foregroundStyle(.black)
+                    if !updatesConfigured {
+                        Text("Signing setup required").font(.system(size: 10, weight: .medium)).foregroundStyle(.orange)
+                    }
+                }
             }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
             Spacer()
         }.padding(28)
