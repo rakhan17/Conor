@@ -64,7 +64,7 @@ jobs:
           APP="dist/Conor.app"
           mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
           cp .build/release/Conor "$APP/Contents/MacOS/Conor"
-          SPARKLE_FRAMEWORK="$(find .build -type d -name Sparkle.framework -print -quit)"
+          SPARKLE_FRAMEWORK="$(find .build -name Sparkle.framework -print -quit)"
           test -n "$SPARKLE_FRAMEWORK"
           ditto "$SPARKLE_FRAMEWORK" "$APP/Contents/Frameworks/Sparkle.framework"
           install_name_tool -add_rpath @executable_path/../Frameworks "$APP/Contents/MacOS/Conor"
