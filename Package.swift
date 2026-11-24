@@ -12,8 +12,7 @@ let package = Package(
         .executableTarget(
             name: "Conor",
             dependencies: [.product(name: "Sparkle", package: "Sparkle")],
-            path: "Sources/Conor",
-            linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
+            path: "Sources/Conor"
         )
     ]
 )
