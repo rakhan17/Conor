@@ -10,7 +10,9 @@ A native macOS AI studio for creating model workspaces, fine-tuning language mod
 [![Platform](https://img.shields.io/badge/platform-macOS-black)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.9-orange)](https://swift.org/)
 
-[**⬇ Download for macOS**](https://github.com/rakhan17/Conor/releases/latest/download/Conor-macOS.dmg)
+[![Download for macOS](https://img.shields.io/badge/Download-macOS%20DMG-black?style=for-the-badge&logo=apple)](https://github.com/rakhan17/Conor/releases/latest/download/Conor-macOS.dmg)
+
+**Latest build:** [Download Conor-macOS.dmg](https://github.com/rakhan17/Conor/releases/latest/download/Conor-macOS.dmg) · [All releases](https://github.com/rakhan17/Conor/releases)
 
 </div>
 
@@ -66,7 +68,7 @@ Never commit or share the private key. Once configured, tagged releases publish 
 
 ## Install
 
-1. Download `Conor-macOS.dmg` from the [latest GitHub Release](https://github.com/rakhan17/Conor/releases/latest/download/Conor-macOS.dmg).
+1. Click the **Download for macOS** button at the top of this page, or [download Conor-macOS.dmg directly](https://github.com/rakhan17/Conor/releases/latest/download/Conor-macOS.dmg).
 2. Open the DMG and drag `Conor.app` to Applications.
 3. Launch Conor. For local chat, install and launch Ollama, then download a model such as `llama3.2`.
 
