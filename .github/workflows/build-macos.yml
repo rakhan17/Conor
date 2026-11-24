@@ -70,7 +70,7 @@ jobs:
           install_name_tool -add_rpath @executable_path/../Frameworks "$APP/Contents/MacOS/Conor"
           VERSION="${GITHUB_REF_NAME#v}"
           if [[ "$VERSION" == "$GITHUB_REF_NAME" ]]; then VERSION="0.1.0"; fi
-          cat > "$APP/Contents/Info.plist" <<'PLIST'
+          cat > "$APP/Contents/Info.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
