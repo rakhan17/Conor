@@ -14,7 +14,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Validate Swift package manifest
+        run: swift package dump-package > /tmp/conor-package.json
+      - name: Validate project structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f Package.swift
+          test -f Sources/Conor/ConorApp.swift
+          test -f README.md
+          grep -q 'struct ConorApp: App' Sources/Conor/ConorApp.swift
+          grep -q 'class ModelStore: ObservableObject' Sources/Conor/ConorApp.swift
+          grep -q 'http://localhost:11434/api/chat' Sources/Conor/ConorApp.swift
+          grep -q 'runs-on: macos-15' .github/workflows/build-macos.yml
+          echo "Conor package manifest and required app components are present."
+
   build:
+    needs: validate
     runs-on: macos-15
     timeout-minutes: 30
     steps:
