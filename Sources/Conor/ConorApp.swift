@@ -185,7 +185,7 @@ struct AppShell: View {
             Group {
                 switch selection {
                 case "Models": ModelsView(showingCreator: $showingCreator)
-                case "Training": TrainingView()
+                case "Training": TrainingView(showingCreator: $showingCreator)
                 case "Playground": PlaygroundView()
                 case "Settings": SettingsView(onCheckForUpdates: onCheckForUpdates)
                 default: OverviewView(selection: $selection, showingCreator: $showingCreator)
@@ -283,7 +283,7 @@ struct OverviewView: View {
                     HStack {
                         Text("Your models").font(.system(size: 16, weight: .semibold))
                         Spacer()
-                        Button("View all") { selection = "My Models" }.buttonStyle(.plain).font(.system(size: 11, weight: .medium))
+                        Button("View all") { selection = "Models" }.buttonStyle(.plain).font(.system(size: 11, weight: .medium))
                     }
                     if store.models.isEmpty {
                         EmptyState(icon: "cube.transparent", title: "Your model space is empty", message: "Create your first model to start shaping its skills and behavior.", action: "Create your first model") { showingCreator = true }
@@ -520,6 +520,7 @@ struct PlaygroundView: View {
 }
 
 struct TrainingView: View {
+    @Binding var showingCreator: Bool
     @EnvironmentObject private var store: ModelStore
     @State private var selectedID: UUID?
     @State private var datasetURL: URL?
@@ -538,7 +539,7 @@ struct TrainingView: View {
         VStack(alignment: .leading, spacing: 16) {
             PageHeader(title: "Training", subtitle: "Fine-tune real model weights locally with MLX-LM and LoRA.")
             if store.models.isEmpty {
-                EmptyState(icon: "waveform.path.ecg", title: "Create a model first", message: "Create a workspace and set its base model to a compatible MLX or Hugging Face model.", action: "Create a model") {}
+                EmptyState(icon: "waveform.path.ecg", title: "Create a model first", message: "Create a workspace and set its base model to a compatible MLX or Hugging Face model.", action: "Create a model") { showingCreator = true }
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
