@@ -457,8 +457,8 @@ struct PlaygroundView: View {
                 }
             }
         }.padding(28)
-            .onChange(of: store.installedOllamaModels) { _, models in if selectedOllamaModel.isEmpty { selectedOllamaModel = models.first ?? "" } }
-            .onChange(of: store.models) { _, models in if selectedModelID == nil { selectedModelID = models.first?.id } }
+            .onChange(of: store.installedOllamaModels) { models in if selectedOllamaModel.isEmpty { selectedOllamaModel = models.first ?? "" } }
+            .onChange(of: store.models) { models in if selectedModelID == nil { selectedModelID = models.first?.id } }
     }
     private func send() {
         let prompt = input
@@ -489,7 +489,7 @@ struct TrainingView: View {
                     Picker("Model", selection: $selectedID) {
                         ForEach(store.models) { Text($0.name).tag(Optional($0.id)) }
                     }.onAppear { if selectedID == nil { selectedID = store.models.first?.id } }
-                    .onChange(of: selectedID) { _, value in if let model = store.models.first(where: { $0.id == value }) { epochs = model.epochs } }
+                    .onChange(of: selectedID) { value in if let model = store.models.first(where: { $0.id == value }) { epochs = model.epochs } }
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Epochs").font(.system(size: 12, weight: .semibold))
